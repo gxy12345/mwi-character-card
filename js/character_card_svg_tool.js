@@ -19,21 +19,21 @@ class CharacterCardSVGTool {
     async loadSpriteSheets() {
         try {
             // 加载物品sprite sheet
-            const itemsResponse = await fetch('/assets/sprites/items_sprite.svg');
+            const itemsResponse = await fetch('/mwi-character-card/assets/sprites/items_sprite.svg');
             if (!itemsResponse.ok) {
                 throw new Error(`HTTP error! status: ${itemsResponse.status}`);
             }
             const itemsSpriteText = await itemsResponse.text();
             
             // 加载技能sprite sheet
-            const skillsResponse = await fetch('/assets/sprites/skill_sprite.svg');
+            const skillsResponse = await fetch('/mwi-character-card/assets/sprites/skill_sprite.svg');
             if (!skillsResponse.ok) {
                 throw new Error(`HTTP error! status: ${skillsResponse.status}`);
             }
             const skillsSpriteText = await skillsResponse.text();
 
             // 加载能力sprite sheet
-            const abilitiesResponse = await fetch('/assets/sprites/abilities_sprite.svg');
+            const abilitiesResponse = await fetch('/mwi-character-card/assets/sprites/abilities_sprite.svg');
             if (!abilitiesResponse.ok) {
                 throw new Error(`HTTP error! status: ${abilitiesResponse.status}`);
             }
