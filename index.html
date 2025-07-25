@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MWI Character Card Generator - 解析MWIT导出的JSON数据生成角色名片">
+    <meta name="author" content="Windoge">
+    <title>MWI Character Card Generator By Windoge</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #4a90e2;
+            text-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .input-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(74, 144, 226, 0.3);
+        }
+
+        .input-section h2 {
+            color: #4a90e2;
+            margin-top: 0;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #4a90e2;
+            border-radius: 8px;
+            color: white;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            color: white;
+            position: relative;
+            min-width: 100px;
+        }
+
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .btn .loading-spinner {
+            display: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .btn.loading {
+            padding-left: 36px;
+        }
+
+        .btn.loading .loading-spinner {
+            display: block;
+        }
+
+        .btn.loading:disabled {
+            opacity: 1;
+            background: #4a90e2;
+        }
+
+        .btn-primary {
+            background: #4a90e2;
+        }
+
+        .btn-primary:hover {
+            background: #357abd;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: black;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .error {
+            color: #dc3545;
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid #dc3545;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .success {
+            color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid #28a745;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .character-card {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            border: 2px solid #4a90e2;
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #4a90e2;
+            padding-bottom: 10px;
+        }
+
+        .card-header h2 {
+            margin: 0;
+            color: #4a90e2;
+            font-size: 24px;
+            text-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
+        }
+
+        .card-content {
+            display: grid;
+            grid-template-columns: 1fr 0.7fr;
+            grid-template-rows: auto auto;
+            gap: 20px;
+        }
+
+        .equipment-panel, .house-panel, .ability-panel, .skill-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid rgba(74, 144, 226, 0.3);
+        }
+
+        .panel-title {
+            margin: 0 0 15px 0;
+            color: #4a90e2;
+            font-size: 16px;
+            border-bottom: 1px solid rgba(74, 144, 226, 0.3);
+            padding-bottom: 5px;
+            text-align: center;
+        }
+
+        .equipment-panel {
+            grid-column: 1;
+            grid-row: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .equipment-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 15px;
+            align-items: center;
+            justify-items: center;
+            padding: 10px 0;
+            overflow: visible;
+        }
+
+        .equipment-slot {
+            position: relative;
+            width: 50px;
+            height: 50px;
+            border: 2px dashed rgba(74, 144, 226, 0.5);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.2);
+            overflow: visible;
+        }
+
+        .equipment-slot.has-item {
+            border: 2px solid #4a90e2;
+            background: rgba(74, 144, 226, 0.1);
+        }
+
+        .equipment-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .equipment-icon svg {
+            width: 40px;
+            height: 40px;
+            display: block;
+        }
+
+        .enhancement-level {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            background: #ff8c00;
+            color: white;
+            font-size: 10px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: bold;
+            z-index: 1;
+        }
+
+        .ability-panel {
+            grid-column: 2;
+            grid-row: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ability-list {
+            flex: 1;
+        }
+
+        .ability-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .ability-row:hover {
+            background: rgba(74, 144, 226, 0.1);
+        }
+
+        .ability-icon {
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: transparent;
+            overflow: visible;
+        }
+
+        .ability-icon svg {
+            width: 24px;
+            height: 24px;
+            display: block;
+            margin: auto;
+        }
+
+        .house-panel {
+            grid-column: 1;
+            grid-row: 2;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .house-slot {
+            position: relative;
+            width: 50px;
+            height: 70px;
+            border: 2px dashed rgba(74, 144, 226, 0.3);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            background: transparent;
+            overflow: visible;
+            padding-top: 8px;
+        }
+
+        .house-slot svg {
+            width: 32px;
+            height: 32px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .house-slot.has-level {
+            border: 2px solid rgba(74, 144, 226, 0.3);
+            background: transparent;
+        }
+
+        .house-level {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(74, 144, 226, 0.2);
+            color: #4a90e2;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            min-width: 30px;
+            z-index: 1;
+        }
+
+        .house-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 12px;
+            align-items: start;
+            justify-items: center;
+            padding: 5px;
+            margin-top: -4px;
+        }
+
+        .skill-panel {
+            grid-column: 2;
+            grid-row: 2;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .skill-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 8px;
+            align-items: center;
+            justify-items: center;
+        }
+
+        .skill-slot {
+            position: relative;
+            width: 50px;
+            height: 70px;
+            border: 2px dashed rgba(74, 144, 226, 0.3);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            background: transparent;
+            overflow: visible;
+            padding-top: 8px;
+        }
+
+        .skill-slot.has-level {
+            border: 2px solid rgba(74, 144, 226, 0.3);
+            background: transparent;
+        }
+
+        .skill-slot svg {
+            width: 40px;
+            height: 40px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .skill-level {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(74, 144, 226, 0.2);
+            color: #4a90e2;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            min-width: 30px;
+            z-index: 1;
+        }
+
+        .panel-section h3 {
+            margin: 0 0 10px 0;
+            color: #4a90e2;
+            font-size: 16px;
+            border-bottom: 1px solid rgba(74, 144, 226, 0.3);
+            padding-bottom: 5px;
+        }
+
+        .level {
+            color: #4a90e2;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #4a90e2;
+        }
+
+        @media (max-width: 768px) {
+            .card-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto auto;
+            }
+            
+            .equipment-panel {
+                grid-column: 1;
+                grid-row: 1;
+            }
+            
+            .equipment-grid {
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: repeat(4, 1fr);
+                justify-items: center;
+            }
+            
+            .ability-panel {
+                grid-column: 1;
+                grid-row: 2;
+            }
+            
+            .house-panel {
+                grid-column: 1;
+                grid-row: 3;
+            }
+            
+            .house-grid {
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: repeat(2, 1fr);
+                justify-items: center;
+            }
+            
+            .skill-panel {
+                grid-column: 1;
+                grid-row: 4;
+            }
+            
+            .skill-grid {
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(2, 1fr);
+                justify-items: center;
+            }
+            
+            .equipment-slot, .house-slot, .skill-slot {
+                width: 40px;
+                height: 55px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MWI Character Card Generator</h1>
+            <p>解析MWIT导出的JSON数据生成角色名片</p>
+        </div>
+
+        <div class="input-section">
+            <h2>输入角色信息</h2>
+            <div style="margin-bottom: 15px;">
+                <label for="characterName" style="display: block; margin-bottom: 5px; color: #4a90e2;">角色名称:</label>
+                <input type="text" id="characterName" placeholder="请输入角色名称..." style="width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.3); border: 1px solid #4a90e2; border-radius: 8px; color: white; font-size: 14px;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label for="characterIntro" style="display: block; margin-bottom: 5px; color: #4a90e2;">自我介绍 (选填，最多50字):</label>
+                <textarea id="characterIntro" placeholder="请输入自我介绍..." maxlength="50" style="width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.3); border: 1px solid #4a90e2; border-radius: 8px; color: white; font-size: 14px; height: 80px; resize: none;"></textarea>
+                <div style="text-align: right; margin-top: 5px; color: #4a90e2; font-size: 12px;">
+                    <span id="introCount">0</span>/50
+                </div>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label for="jsonInput" style="display: block; margin-bottom: 5px; color: #4a90e2;">MWIT导出的JSON数据:</label>
+                <textarea id="jsonInput" placeholder="请粘贴MWIT导出的JSON数据..."></textarea>
+            </div>
+
+            <script>
+                // 添加字数统计功能
+                document.getElementById('characterIntro').addEventListener('input', function() {
+                    const count = this.value.length;
+                    document.getElementById('introCount').textContent = count;
+                });
+            </script>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="parseJSON()">解析数据</button>
+                <button class="btn btn-warning" onclick="loadSampleData()">加载示例数据</button>
+                <button class="btn btn-success" onclick="downloadCard()" id="downloadBtn" disabled>
+                    <div class="loading-spinner"></div>
+                    <span>下载名片</span>
+                </button>
+            </div>
+            <div id="message"></div>
+        </div>
+
+        <div id="cardContainer" class="hidden">
+            <!-- 角色名片将在这里生成 -->
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding: 20px; color: rgba(255, 255, 255, 0.6); font-size: 14px; border-top: 1px solid rgba(74, 144, 226, 0.2);">
+            <p>Created by Windoge</p>
+            <p>Contact: <a href="mailto:254768511@qq.com" style="color: #4a90e2; text-decoration: none;">254768511@qq.com</a></p>
+        </div>
+    </div>
+
+    <!-- SVG工具脚本 -->
+    <script src="js/character_card_svg_tool.js"></script>
+    <script>
+        // 初始化SVG工具
+        let svgTool = null;
+        
+        // 初始化SVG工具的函数
+        async function initSVGTool() {
+            try {
+                if (!window.characterCardSVG) {
+                    console.error('SVG工具未能正确加载，请检查character_card_svg_tool.js文件');
+                    return false;
+                }
+                
+                svgTool = new window.characterCardSVG();
+                
+                try {
+                    await svgTool.loadSpriteSheets();
+                    console.log('SVG工具初始化成功');
+                    return true;
+                } catch (error) {
+                    console.error('SVG sprite sheets加载失败:', error);
+                    return false;
+                }
+            } catch (error) {
+                console.error('SVG工具初始化失败:', error);
+                return false;
+            }
+        }
+        
+        // 页面加载完成后初始化SVG工具
+        document.addEventListener('DOMContentLoaded', initSVGTool);
+    </script>
+
+    <script>
+        let characterData = null;
+        let clientData = null;
+
+        // 获取物品名称
+        function getItemName(itemHrid) {
+            return itemHrid.replace("/items/", "");
+        }
+
+        // 房屋名称映射
+        const houseNames = {
+            "archery_range": "射箭场",
+            "armory": "军械库",
+            "dojo": "道场",
+            "gym": "健身房",
+            "library": "图书馆",
+            "mystical_study": "神秘研究室",
+            "dining_room": "餐厅"
+        };
+
+        // 战斗属性名称映射
+        const combatAbilityNames = {
+            "intelligence": "智力",
+            "power": "力量",
+            "defense": "防御",
+            "stamina": "耐力",
+            "magic": "魔法",
+            "ranged": "远程",
+            "attack": "攻击"
+        };
+
+        // 创建SVG图标
+        function createSvgIcon(itemHrid, size = 24, type = 'items') {
+            if (!svgTool) {
+                console.warn('SVG工具未初始化');
+                return createDefaultIcon(itemHrid, size);
+            }
+
+            const itemId = itemHrid.replace("/items/", "");
+            
+            try {
+                // 使用SVG工具创建图标
+                if (svgTool.hasIcon(itemId, type)) {
+                    const iconElement = svgTool.createSVGIcon(itemId, {
+                        size: size,
+                        className: 'equipment-icon',
+                        title: getItemName(itemHrid),
+                        type: type
+                    });
+                    
+                    if (iconElement) {
+                        // 将DOM元素转换为HTML字符串
+                        const tempDiv = document.createElement('div');
+                        tempDiv.appendChild(iconElement);
+                        return tempDiv.innerHTML;
+                    }
+                }
+                
+                return createDefaultIcon(itemHrid, size);
+            } catch (error) {
+                console.error(`创建SVG图标失败 ${itemId}:`, error);
+                return createDefaultIcon(itemHrid, size);
+            }
+        }
+
+        // 创建默认图标
+        function createDefaultIcon(itemHrid, size) {
+            const itemId = itemHrid.replace("/items/", "");
+            return `<div style="width: ${size}px; height: ${size}px; background: #4a90e2; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; text-align: center; line-height: 1;">
+                ${itemId.length > 8 ? itemId.substring(0, 8) + '...' : itemId}
+            </div>`;
+        }
+
+        // 获取房屋名称
+        function getHouseName(houseHrid) {
+            const houseId = houseHrid.split("/").pop();
+            return houseNames[houseId] || houseId;
+        }
+
+        // 生成装备面板
+        async function generateEquipmentPanel(characterObj) {
+            // 装备位置映射
+            const equipmentSlots = {
+                "/item_locations/back": "E1",
+                "/item_locations/head": "E2", 
+                "/item_locations/main_hand": "E3",
+                "/item_locations/body": "E4",
+                "/item_locations/off_hand": "E5",
+                "/item_locations/hands": "E6",
+                "/item_locations/legs": "E7",
+                "/item_locations/pouch": "E8",
+                "/item_locations/feet": "E9",
+                "/item_locations/neck": "E10",
+                "/item_locations/earrings": "E11",
+                "/item_locations/ring": "E12",
+                "/item_locations/trinket": "E13",
+                "/item_locations/two_hand": "E3" // 双手武器显示在主手位置
+            };
+
+            // 装备槽位名称映射
+            const slotNames = {
+                "E1": "背部",
+                "E2": "头部",
+                "E3": "主手",
+                "E4": "身体",
+                "E5": "副手",
+                "E6": "手部",
+                "E7": "腿部",
+                "E8": "袋子",
+                "E9": "脚部",
+                "E10": "项链",
+                "E11": "耳环",
+                "E12": "戒指",
+                "E13": "徽章"
+            };
+
+            // 装备槽位布局（4x4网格，E1-E13位置）
+            const slotLayout = [
+                ["E1", "E2", "", "E10"],
+                ["E3", "E4", "E5", "E11"],
+                ["E6", "E7", "E8", "E12"],
+                ["", "E9", "", "E13"]
+            ];
+
+            // 支持新旧两种数据格式
+            let items = [];
+            if (characterObj.equipment) {
+                items = characterObj.equipment;
+            } else if (characterObj.characterItems) {
+                items = characterObj.characterItems;
+            }
+
+            // 创建装备映射
+            const equipmentMap = {};
+            let hasTwoHandWeapon = false;
+
+            items.forEach(item => {
+                const slotId = equipmentSlots[item.itemLocationHrid];
+                if (slotId) {
+                    equipmentMap[slotId] = item;
+                    if (item.itemLocationHrid === "/item_locations/two_hand") {
+                        hasTwoHandWeapon = true;
+                    }
+                }
+            });
+
+            let html = '<div class="equipment-panel">';
+            html += '<div class="panel-title">装备</div>';
+            html += '<div class="equipment-grid">';
+            
+            // 生成装备网格
+            for (let i = 0; i < slotLayout.length; i++) {
+                for (let j = 0; j < slotLayout[i].length; j++) {
+                    const slotId = slotLayout[i][j];
+                    if (slotId) {
+                        const item = equipmentMap[slotId];
+                        if (item && (!hasTwoHandWeapon || slotId !== "E5")) {
+                            const enhancement = item.enhancementLevel > 0 ? `+${item.enhancementLevel}` : '';
+                            const iconHtml = createSvgIcon(item.itemHrid, 30);
+                            html += `<div class="equipment-slot has-item" title="${getItemName(item.itemHrid)}">
+                                ${iconHtml}
+                                ${enhancement ? `<div class="enhancement-level">${enhancement}</div>` : ''}
+                            </div>`;
+                        } else {
+                            html += `<div class="equipment-slot">
+                                <span style="color: rgba(255,255,255,0.3); font-size: 12px;">${slotNames[slotId]}</span>
+                            </div>`;
+                        }
+                    } else {
+                        html += `<div class="equipment-slot" style="visibility: hidden;"></div>`;
+                    }
+                }
+            }
+            
+            html += '</div></div>';
+            return html;
+        }
+
+        // 生成房屋面板
+        function generateHousePanel(data) {
+            // 房屋房间映射
+            const houseRoomsMapping = [
+                { hrid: "/house_rooms/dining_room", icon: "stamina", name: "餐厅" },
+                { hrid: "/house_rooms/library", icon: "intelligence", name: "图书馆" },
+                { hrid: "/house_rooms/dojo", icon: "attack", name: "道场" },
+                { hrid: "/house_rooms/gym", icon: "power", name: "健身房" },
+                { hrid: "/house_rooms/armory", icon: "defense", name: "军械库" },
+                { hrid: "/house_rooms/archery_range", icon: "ranged", name: "射箭场" },
+                { hrid: "/house_rooms/mystical_study", icon: "magic", name: "神秘研究室" }
+            ];
+
+            // 房屋槽位布局（4x2网格，H1-H7位置）
+            const slotLayout = [
+                ["H1", "H2", "H3", "H4"],
+                ["H5", "H6", "H7", ""]
+            ];
+
+            // 支持新旧两种数据格式
+            let houseRoomMap = {};
+            if (data.houseRooms) {
+                // 新格式：顶层houseRooms
+                houseRoomMap = data.houseRooms;
+            } else if (data.characterHouseRoomMap) {
+                // 旧格式：characterHouseRoomMap
+                houseRoomMap = data.characterHouseRoomMap;
+            }
+
+            let html = '<div class="house-panel">';
+            html += '<div class="panel-title">房屋等级</div>';
+            html += '<div class="house-grid">';
+            
+            // 生成房屋网格
+            let roomIndex = 0;
+            slotLayout.forEach(row => {
+                row.forEach(iconId => {
+                    if (iconId) {
+                        const houseRoom = houseRoomsMapping[roomIndex];
+                        if (houseRoom) {
+                            let level = 0;
+                            if (houseRoomMap[houseRoom.hrid]) {
+                                if (typeof houseRoomMap[houseRoom.hrid] === 'object') {
+                                    level = houseRoomMap[houseRoom.hrid].level || 0;
+                                } else {
+                                    level = houseRoomMap[houseRoom.hrid];
+                                }
+                            }
+                            
+                            if (level > 0) {
+                                html += `<div class="house-slot has-level">
+                                    ${createSvgIcon(houseRoom.icon, 30, 'skills')}
+                                    <div class="house-level">Lv.${level}</div>
+                                </div>`;
+                            } else {
+                                html += `<div class="house-slot">
+                                    ${createSvgIcon(houseRoom.icon, 30, 'skills')}
+                                    <div class="house-level" style="color: rgba(255,255,255,0.3);">Lv.0</div>
+                                </div>`;
+                            }
+                            roomIndex++;
+                        }
+                    } else {
+                        html += `<div class="house-slot" style="visibility: hidden;"></div>`;
+                    }
+                });
+            });
+            
+            html += '</div></div>';
+            return html;
+        }
+
+        // 生成能力面板
+        function generateAbilityPanel(characterObj) {
+            // 能力属性映射
+            const abilityMapping = [
+                { key: "staminaLevel", name: "耐力", icon: "stamina" },
+                { key: "intelligenceLevel", name: "智力", icon: "intelligence" },
+                { key: "attackLevel", name: "攻击", icon: "attack" },
+                { key: "powerLevel", name: "力量", icon: "power" },
+                { key: "defenseLevel", name: "防御", icon: "defense" },
+                { key: "rangedLevel", name: "远程", icon: "ranged" },
+                { key: "magicLevel", name: "魔法", icon: "magic" }
+            ];
+
+            let html = '<div class="ability-panel">';
+            html += '<div class="panel-title">属性等级</div>';
+            html += '<div class="ability-list">';
+            
+            abilityMapping.forEach(ability => {
+                let level = 0;
+                
+                // 支持新旧两种数据格式
+                if (characterObj[ability.key]) {
+                    // 新格式：直接有属性等级字段
+                    level = characterObj[ability.key];
+                } else if (characterObj.characterSkills) {
+                    // 旧格式：从技能中查找
+                    const skillKey = ability.key.replace('Level', '');
+                    const skill = characterObj.characterSkills.find(skill => 
+                        skill.skillHrid.includes(`/skills/${skillKey}`)
+                    );
+                    level = skill ? skill.level : 0;
+                }
+                
+                html += `<div class="ability-row">
+                    <div class="ability-icon">
+                        ${createSvgIcon(ability.icon, 30, 'skills')}
+                    </div>
+                    <span style="flex: 1;">${ability.name}</span>
+                    <span class="level">Lv.${level}</span>
+                </div>`;
+            });
+            
+            html += '</div></div>';
+            return html;
+        }
+
+        // 生成技能面板
+        function generateSkillPanel(data) {
+            // 技能槽位布局（3x2网格，支持0-5个技能）
+            const slotLayout = [
+                ["S1", "S1", "S1"],
+                ["S1", "S1", ""]
+            ];
+
+            // 支持新旧两种数据格式
+            let abilities = [];
+            if (data.abilities) {
+                // 新格式：顶层abilities
+                abilities = data.abilities;
+            } else if (data.characterSkills) {
+                // 旧格式：characterSkills
+                abilities = data.characterSkills;
+            }
+
+            // 过滤出非战斗技能，按等级排序
+            const nonCombatSkills = abilities
+                .filter(ability => ability.abilityHrid && ability.abilityHrid.startsWith("/abilities/"))
+                .sort((a, b) => b.level - a.level)
+                .slice(0, 5); // 最多显示5个技能
+
+            let html = '<div class="skill-panel">';
+            html += '<div class="panel-title">技能等级</div>';
+            html += '<div class="skill-grid">';
+            
+            // 生成技能网格
+            let skillIndex = 0;
+            slotLayout.forEach(row => {
+                row.forEach(iconId => {
+                    if (iconId) {
+                        const ability = nonCombatSkills[skillIndex];
+                        if (ability) {
+                            // 从abilityHrid中提取技能ID
+                            const abilityId = ability.abilityHrid.split('/').pop();
+                            html += `<div class="skill-slot has-level">
+                                ${createSvgIcon(abilityId, 40, 'abilities')}
+                                <div class="skill-level">Lv.${ability.level}</div>
+                            </div>`;
+                            skillIndex++;
+                        } else {
+                            html += `<div class="skill-slot">
+                                <span style="color: rgba(255,255,255,0.3); font-size: 12px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); white-space: nowrap;">无技能</span>
+                            </div>`;
+                        }
+                    } else {
+                        html += `<div class="skill-slot" style="visibility: hidden;"></div>`;
+                    }
+                });
+            });
+            
+            html += '</div></div>';
+            return html;
+        }
+
+        // 生成角色名片
+        async function generateCharacterCard(data) {
+            // 获取用户输入的角色名称和自我介绍
+            const characterName = document.getElementById('characterName').value.trim() || "角色";
+            const characterIntro = document.getElementById('characterIntro').value.trim();
+            let characterObj = data;
+            
+            if (data.player) {
+                // 新格式：使用player对象
+                characterObj = data.player;
+            } else if (data.character) {
+                // 旧格式：使用character对象
+                characterObj = data;
+            }
+            
+            const equipmentPanel = await generateEquipmentPanel(characterObj);
+            return `<div id="character-card" class="character-card">
+                <div class="card-header">
+                    <h2>${characterName}</h2>
+                    ${characterIntro ? `<p style="color: white; text-align: center; margin: 10px 0; font-size: 14px; opacity: 0.8;">${characterIntro}</p>` : ''}
+                </div>
+                <div class="card-content">
+                    ${equipmentPanel}
+                    ${generateAbilityPanel(characterObj)}
+                    ${generateSkillPanel(data)}
+                    ${generateHousePanel(data)}
+                </div>
+            </div>`;
+        }
+
+        // 解析JSON数据
+        async function parseJSON() {
+            const jsonInput = document.getElementById('jsonInput').value.trim();
+            const characterName = document.getElementById('characterName').value.trim();
+            const characterIntro = document.getElementById('characterIntro').value.trim();
+            const messageDiv = document.getElementById('message');
+            const cardContainer = document.getElementById('cardContainer');
+            const downloadBtn = document.getElementById('downloadBtn');
+
+            if (!characterName) {
+                showMessage('请输入角色名称', 'error');
+                return;
+            }
+
+            if (!jsonInput) {
+                showMessage('请输入JSON数据', 'error');
+                return;
+            }
+
+            try {
+                const data = JSON.parse(jsonInput);
+                
+                // 检查数据格式 - 支持新的player格式
+                if (data.player && data.player.equipment) {
+                    // 新格式：player对象包含equipment
+                    characterData = data;
+                    showMessage('数据解析成功！', 'success');
+                    
+                    // 生成名片
+                    const cardHtml = await generateCharacterCard(data);
+                    cardContainer.innerHTML = cardHtml;
+                    cardContainer.classList.remove('hidden');
+                    
+                    // 启用下载按钮
+                    downloadBtn.disabled = false;
+                } else if (data.character && data.characterSkills && data.characterItems) {
+                    // 旧格式：character对象
+                    characterData = data;
+                    showMessage('数据解析成功！', 'success');
+                    
+                    // 生成名片
+                    const cardHtml = await generateCharacterCard(data);
+                    cardContainer.innerHTML = cardHtml;
+                    cardContainer.classList.remove('hidden');
+                    
+                    // 启用下载按钮
+                    downloadBtn.disabled = false;
+                } else {
+                    showMessage('JSON格式不正确，请确保包含角色数据', 'error');
+                }
+            } catch (error) {
+                showMessage('JSON解析失败: ' + error.message, 'error');
+            }
+        }
+
+        // 显示消息
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = type;
+            messageDiv.textContent = text;
+        }
+
+        // 加载示例数据
+        function loadSampleData() {
+            // 设置示例角色名称和自我介绍
+            document.getElementById('characterName').value = "Stella";
+            document.getElementById('characterIntro').value = "这是示例角色自我介绍";
+            document.getElementById('introCount').textContent = "这是示例角色自我介绍".length;
+            
+            const sampleData = {"player":{"powerLevel":54,"rangedLevel":147,"attackLevel":76,"magicLevel":36,"defenseLevel":130,"intelligenceLevel":126,"staminaLevel":129,"equipment":[{"itemLocationHrid":"/item_locations/alchemy_tool","itemHrid":"/items/rainbow_alembic","enhancementLevel":0},{"itemLocationHrid":"/item_locations/back","itemHrid":"/items/chimerical_quiver","enhancementLevel":10},{"itemLocationHrid":"/item_locations/body","itemHrid":"/items/kraken_tunic","enhancementLevel":12},{"itemLocationHrid":"/item_locations/cheesesmithing_tool","itemHrid":"/items/holy_hammer","enhancementLevel":5},{"itemLocationHrid":"/item_locations/cooking_tool","itemHrid":"/items/holy_spatula","enhancementLevel":5},{"itemLocationHrid":"/item_locations/crafting_tool","itemHrid":"/items/holy_chisel","enhancementLevel":5},{"itemLocationHrid":"/item_locations/earrings","itemHrid":"/items/philosophers_earrings","enhancementLevel":7},{"itemLocationHrid":"/item_locations/enhancing_tool","itemHrid":"/items/holy_enhancer","enhancementLevel":10},{"itemLocationHrid":"/item_locations/feet","itemHrid":"/items/centaur_boots","enhancementLevel":14},{"itemLocationHrid":"/item_locations/foraging_tool","itemHrid":"/items/crimson_shears","enhancementLevel":0},{"itemLocationHrid":"/item_locations/hands","itemHrid":"/items/marksman_bracers","enhancementLevel":12},{"itemLocationHrid":"/item_locations/head","itemHrid":"/items/acrobatic_hood","enhancementLevel":12},{"itemLocationHrid":"/item_locations/legs","itemHrid":"/items/kraken_chaps","enhancementLevel":12},{"itemLocationHrid":"/item_locations/milking_tool","itemHrid":"/items/crimson_brush","enhancementLevel":0},{"itemLocationHrid":"/item_locations/neck","itemHrid":"/items/philosophers_necklace","enhancementLevel":10},{"itemLocationHrid":"/item_locations/pouch","itemHrid":"/items/guzzling_pouch","enhancementLevel":10},{"itemLocationHrid":"/item_locations/ring","itemHrid":"/items/philosophers_ring","enhancementLevel":7},{"itemLocationHrid":"/item_locations/tailoring_tool","itemHrid":"/items/holy_needle","enhancementLevel":5},{"itemLocationHrid":"/item_locations/trinket","itemHrid":"/items/expert_task_badge","enhancementLevel":2},{"itemLocationHrid":"/item_locations/two_hand","itemHrid":"/items/cursed_bow","enhancementLevel":14},{"itemLocationHrid":"/item_locations/woodcutting_tool","itemHrid":"/items/crimson_hatchet","enhancementLevel":0}]},"food":{"/action_types/combat":[{"itemHrid":"/items/spaceberry_donut"},{"itemHrid":"/items/spaceberry_cake"},{"itemHrid":"/items/star_fruit_yogurt"}]},"drinks":{"/action_types/combat":[{"itemHrid":"/items/wisdom_coffee"},{"itemHrid":"/items/super_ranged_coffee"},{"itemHrid":"/items/critical_coffee"}]},"abilities":[{"abilityHrid":"/abilities/speed_aura","level":23},{"abilityHrid":"/abilities/frenzy","level":80},{"abilityHrid":"/abilities/berserk","level":90},{"abilityHrid":"/abilities/rain_of_arrows","level":85},{"abilityHrid":"/abilities/penetrating_shot","level":94}],"houseRooms":{"/house_rooms/archery_range":8,"/house_rooms/armory":6,"/house_rooms/brewery":4,"/house_rooms/dairy_barn":4,"/house_rooms/dining_room":7,"/house_rooms/dojo":8,"/house_rooms/forge":4,"/house_rooms/garden":4,"/house_rooms/gym":4,"/house_rooms/kitchen":4,"/house_rooms/laboratory":4,"/house_rooms/library":7,"/house_rooms/log_shed":4,"/house_rooms/mystical_study":4,"/house_rooms/observatory":6,"/house_rooms/sewing_parlor":4,"/house_rooms/workshop":4}};
+
+            document.getElementById('jsonInput').value = JSON.stringify(sampleData, null, 2);
+            showMessage('示例数据已加载', 'success');
+        }
+
+        // 下载名片
+        async function downloadCard() {
+            const cardElement = document.getElementById('character-card');
+            if (!cardElement) {
+                showMessage('请先生成名片', 'error');
+                return;
+            }
+
+            const downloadBtn = document.getElementById('downloadBtn');
+            const btnText = downloadBtn.querySelector('span');
+            const originalText = btnText.textContent;
+
+            // 立即更新按钮状态
+            downloadBtn.classList.add('loading');
+            downloadBtn.disabled = true;
+            btnText.textContent = '生成中...';
+
+            // 确保UI更新
+            await new Promise(resolve => setTimeout(resolve, 0));
+
+            try {
+                // 克隆卡片元素以避免修改原始DOM
+                const cardClone = cardElement.cloneNode(true);
+                
+                // 内联所有SVG图标
+                const useElements = cardClone.querySelectorAll('use');
+                const promises = Array.from(useElements).map(use => {
+                    return new Promise((resolve) => {
+                        const iconId = use.getAttribute('href')?.substring(1) || use.getAttribute('xlink:href')?.substring(1);
+                        if (iconId) {
+                            // 查找原始symbol
+                            let symbol = null;
+                            if (svgTool.spriteSheets.items) {
+                                symbol = svgTool.spriteSheets.items.querySelector(`#${iconId}`);
+                            }
+                            if (!symbol && svgTool.spriteSheets.skills) {
+                                symbol = svgTool.spriteSheets.skills.querySelector(`#${iconId}`);
+                            }
+                            if (!symbol && svgTool.spriteSheets.abilities) {
+                                symbol = svgTool.spriteSheets.abilities.querySelector(`#${iconId}`);
+                            }
+
+                            if (symbol) {
+                                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                                Array.from(symbol.attributes).forEach(attr => {
+                                    if (attr.name !== 'id') {
+                                        g.setAttribute(attr.name, attr.value);
+                                    }
+                                });
+                                g.innerHTML = symbol.innerHTML;
+                                use.parentNode.replaceChild(g, use);
+                            }
+                        }
+                        resolve();
+                    });
+                });
+
+                // 等待所有SVG内联完成后再生成图片
+                await Promise.all(promises);
+
+                // 将克隆的元素临时添加到DOM中（隐藏状态）
+                cardClone.style.position = 'absolute';
+                cardClone.style.left = '-9999px';
+                cardClone.style.top = '-9999px';
+                document.body.appendChild(cardClone);
+
+                // 生成图片
+                const canvas = await html2canvas(cardClone, {
+                    backgroundColor: null,
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    logging: false,
+                    onclone: function(clonedDoc) {
+                        const clonedElement = clonedDoc.getElementById('character-card');
+                        if (clonedElement) {
+                            clonedElement.querySelectorAll('svg').forEach(svg => {
+                                svg.style.visibility = 'visible';
+                                svg.style.opacity = '1';
+                            });
+                        }
+                    }
+                });
+
+                // 移除临时克隆元素
+                document.body.removeChild(cardClone);
+
+                // 下载图片
+                const link = document.createElement('a');
+                const characterName = document.getElementById('characterName').value.trim() || "角色";
+                link.download = `${characterName}_character_card.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                showMessage('名片下载成功！', 'success');
+            } catch (error) {
+                console.error('图片生成失败:', error);
+                showMessage('图片生成失败，请重试', 'error');
+            } finally {
+                // 恢复按钮状态并刷新页面
+                downloadBtn.classList.remove('loading');
+                downloadBtn.disabled = false;
+                btnText.textContent = originalText;
+                location.reload();
+            }
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('MWI Character Card Generator 已加载');
+        });
+    </script>
+</body>
+</html> 
