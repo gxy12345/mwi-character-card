@@ -98,7 +98,10 @@
             transition: all 0.3s;
             color: white;
             position: relative;
-            min-width: 100px;
+            min-width: 140px;  /* 增加最小宽度 */
+            display: flex;     /* 使用flex布局 */
+            align-items: center; /* 垂直居中 */
+            justify-content: center; /* 水平居中 */
         }
 
         .btn:disabled {
@@ -119,18 +122,15 @@
             border-radius: 50%;
             border-top-color: #fff;
             animation: spin 1s linear infinite;
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
+            margin-right: 8px; /* 添加右边距 */
         }
 
         .btn.loading {
-            padding-left: 36px;
+            padding-left: 20px; /* 修改左内边距 */
         }
 
         .btn.loading .loading-spinner {
-            display: block;
+            display: inline-block; /* 改为inline-block */
         }
 
         .btn.loading:disabled {
@@ -282,13 +282,29 @@
             position: absolute;
             top: -5px;
             left: -5px;
-            background: #ff8c00;
             color: white;
             font-size: 10px;
             padding: 2px 4px;
             border-radius: 4px;
             font-weight: bold;
             z-index: 1;
+        }
+
+        /* 添加强化等级颜色样式 */
+        .enhancement-level.level-low {
+            background: #4CAF50; /* 浅绿色 1-4 */
+        }
+        .enhancement-level.level-medium {
+            background: #03A9F4; /* 浅蓝色 5-7 */
+        }
+        .enhancement-level.level-high {
+            background: #9C27B0; /* 浅紫色 8-10 */
+        }
+        .enhancement-level.level-very-high {
+            background: #ff8c00; /* 橙色 11-14 */
+        }
+        .enhancement-level.level-max {
+            background: #E91E63; /* 玫红色 15+ */
         }
 
         .ability-panel {
@@ -976,9 +992,24 @@
                         if (item && (!hasTwoHandWeapon || slotId !== "E5")) {
                             const enhancement = item.enhancementLevel > 0 ? `+${item.enhancementLevel}` : '';
                             const iconHtml = createSvgIcon(item.itemHrid, 30);
+                            
+                            // 根据强化等级设置颜色类名
+                            let enhancementClass = '';
+                            if (item.enhancementLevel >= 15) {
+                                enhancementClass = 'level-max';
+                            } else if (item.enhancementLevel >= 11) {
+                                enhancementClass = 'level-very-high';
+                            } else if (item.enhancementLevel >= 8) {
+                                enhancementClass = 'level-high';
+                            } else if (item.enhancementLevel >= 5) {
+                                enhancementClass = 'level-medium';
+                            } else if (item.enhancementLevel >= 1) {
+                                enhancementClass = 'level-low';
+                            }
+                            
                             html += `<div class="equipment-slot has-item" title="${getItemName(item.itemHrid)}">
                                 ${iconHtml}
-                                ${enhancement ? `<div class="enhancement-level">${enhancement}</div>` : ''}
+                                ${enhancement ? `<div class="enhancement-level ${enhancementClass}">${enhancement}</div>` : ''}
                             </div>`;
                         } else {
                             html += `<div class="equipment-slot">
@@ -1373,11 +1404,21 @@
                 // 等待所有SVG内联完成后再生成图片
                 await Promise.all(promises);
 
-                // 将克隆的元素临时添加到DOM中（隐藏状态）
+                // 克隆的元素临时添加到DOM中（隐藏状态）
                 cardClone.style.position = 'absolute';
                 cardClone.style.left = '-9999px';
                 cardClone.style.top = '-9999px';
                 document.body.appendChild(cardClone);
+
+                // 获取原始卡片的实际尺寸
+                const originalCard = document.getElementById('character-card');
+                const originalWidth = originalCard.offsetWidth;
+                const originalHeight = originalCard.offsetHeight;
+                const originalRatio = originalHeight / originalWidth;
+
+                // 设置克隆元素的尺寸
+                cardClone.style.width = originalWidth + 'px';
+                cardClone.style.height = originalHeight + 'px';
 
                 // 生成图片
                 const canvas = await html2canvas(cardClone, {
@@ -1386,16 +1427,36 @@
                     useCORS: true,
                     allowTaint: true,
                     logging: false,
+                    width: originalWidth,
+                    height: originalHeight,
                     onclone: function(clonedDoc) {
                         const clonedElement = clonedDoc.getElementById('character-card');
                         if (clonedElement) {
+                            // 复制原始元素的所有计算样式
+                            const computedStyle = window.getComputedStyle(originalCard);
+                            for (const prop of computedStyle) {
+                                clonedElement.style[prop] = computedStyle.getPropertyValue(prop);
+                            }
+                            // 确保尺寸正确
+                            clonedElement.style.width = originalWidth + 'px';
+                            clonedElement.style.height = originalHeight + 'px';
+                            // 确保SVG元素可见且尺寸正确
                             clonedElement.querySelectorAll('svg').forEach(svg => {
                                 svg.style.visibility = 'visible';
                                 svg.style.opacity = '1';
+                                svg.setAttribute('width', svg.getAttribute('width'));
+                                svg.setAttribute('height', svg.getAttribute('height'));
                             });
                         }
                     }
                 });
+
+                // 创建一个新的canvas来确保输出尺寸正确
+                const outputCanvas = document.createElement('canvas');
+                const outputCtx = outputCanvas.getContext('2d');
+                outputCanvas.width = canvas.width;
+                outputCanvas.height = canvas.height;
+                outputCtx.drawImage(canvas, 0, 0);
 
                 // 移除临时克隆元素
                 document.body.removeChild(cardClone);
@@ -1404,7 +1465,7 @@
                 const link = document.createElement('a');
                 const characterName = document.getElementById('characterName').value.trim() || "角色";
                 link.download = `${characterName}_character_card.png`;
-                link.href = canvas.toDataURL('image/png');
+                link.href = outputCanvas.toDataURL('image/png');
                 link.click();
 
                 showMessage('名片下载成功！', 'success');
