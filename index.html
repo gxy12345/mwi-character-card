@@ -18,6 +18,29 @@
             color: white;
         }
 
+        /* 添加语言切换按钮样式 */
+        .language-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .language-btn {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .language-btn:hover {
+            background: #357abd;
+        }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -512,6 +535,11 @@
     </style>
 </head>
 <body>
+    <!-- 添加语言切换按钮 -->
+    <div class="language-switch">
+        <button class="language-btn" onclick="toggleLanguage()" id="langBtn">English</button>
+    </div>
+
     <div class="container">
         <div class="header">
             <h1>MWI Character Card Generator</h1>
@@ -600,6 +628,195 @@
     </script>
 
     <script>
+        // 添加语言配置
+        const translations = {
+            zh: {
+                title: "MWI Character Card Generator",
+                subtitle: "解析MWI Tools导出的JSON数据生成角色名片",
+                inputTitle: "输入角色信息",
+                characterNameLabel: "角色名称:",
+                characterNamePlaceholder: "请输入角色名称...",
+                introLabel: "自我介绍 (选填，最多50字):",
+                introPlaceholder: "请输入自我介绍...",
+                jsonLabel: "MWI Tools导出的JSON数据:",
+                jsonPlaceholder: "请粘贴MWI Tools导出的JSON数据...",
+                parseBtn: "解析数据",
+                sampleBtn: "加载示例数据",
+                downloadBtn: "下载名片",
+                downloading: "生成中...",
+                equipment: "装备",
+                abilities: "属性等级",
+                skills: "技能等级",
+                houseRooms: "房屋等级",
+                noSkill: "无技能",
+                // 装备槽位
+                slots: {
+                    back: "背部",
+                    head: "头部",
+                    main_hand: "主手",
+                    body: "身体",
+                    off_hand: "副手",
+                    hands: "手部",
+                    legs: "腿部",
+                    pouch: "袋子",
+                    feet: "脚部",
+                    neck: "项链",
+                    earrings: "耳环",
+                    ring: "戒指",
+                    trinket: "徽章",
+                    empty: "空" // 添加空槽位提示
+                },
+                // 属性
+                attributes: {
+                    stamina: "耐力",
+                    intelligence: "智力",
+                    attack: "攻击",
+                    power: "力量",
+                    defense: "防御",
+                    ranged: "远程",
+                    magic: "魔法"
+                },
+                // 房屋
+                houses: {
+                    dining_room: "餐厅",
+                    library: "图书馆",
+                    dojo: "道场",
+                    gym: "健身房",
+                    armory: "军械库",
+                    archery_range: "射箭场",
+                    mystical_study: "神秘研究室"
+                },
+                // 消息
+                messages: {
+                    enterName: "请输入角色名称",
+                    enterJson: "请输入JSON数据",
+                    parseSuccess: "数据解析成功！",
+                    parseError: "JSON格式不正确，请确保包含角色数据",
+                    jsonError: "JSON解析失败: ",
+                    sampleLoaded: "示例数据已加载",
+                    generateFirst: "请先生成名片",
+                    downloadSuccess: "名片下载成功！",
+                    downloadError: "图片生成失败，请重试"
+                },
+                sample: {
+                    name: "Stella",
+                    intro: "这是示例角色自我介绍"
+                }
+            },
+            en: {
+                title: "MWI Character Card Generator",
+                subtitle: "Generate character card from MWI Tools exported JSON data",
+                inputTitle: "Enter Character Information",
+                characterNameLabel: "Character Name:",
+                characterNamePlaceholder: "Enter character name...",
+                introLabel: "Introduction (Optional, max 50 characters):",
+                introPlaceholder: "Enter introduction...",
+                jsonLabel: "MWI Tools Exported JSON Data:",
+                jsonPlaceholder: "Paste MWI Tools exported JSON data here...",
+                parseBtn: "Parse Data",
+                sampleBtn: "Load Sample",
+                downloadBtn: "Download Card",
+                downloading: "Generating...",
+                equipment: "Equipment",
+                abilities: "Skills",
+                skills: "Abilities",
+                houseRooms: "House Rooms",
+                noSkill: "No Ability",
+                // Equipment slots
+                slots: {
+                    back: "Back",
+                    head: "Head",
+                    main_hand: "Main Hand",
+                    body: "Body",
+                    off_hand: "Off Hand",
+                    hands: "Hands",
+                    legs: "Legs",
+                    pouch: "Pouch",
+                    feet: "Feet",
+                    neck: "Necklace",
+                    earrings: "Earrings",
+                    ring: "Ring",
+                    trinket: "Badge",
+                    empty: "Empty" // 添加空槽位提示
+                },
+                // Attributes
+                attributes: {
+                    stamina: "Stamina",
+                    intelligence: "Intelligence",
+                    attack: "Attack",
+                    power: "Power",
+                    defense: "Defense",
+                    ranged: "Ranged",
+                    magic: "Magic"
+                },
+                // Houses
+                houses: {
+                    dining_room: "Dining Room",
+                    library: "Library",
+                    dojo: "Dojo",
+                    gym: "Gym",
+                    armory: "Armory",
+                    archery_range: "Archery Range",
+                    mystical_study: "Mystical Study"
+                },
+                // Messages
+                messages: {
+                    enterName: "Please enter character name",
+                    enterJson: "Please enter JSON data",
+                    parseSuccess: "Data parsed successfully!",
+                    parseError: "Invalid JSON format, please ensure it contains character data",
+                    jsonError: "JSON parse error: ",
+                    sampleLoaded: "Sample data loaded",
+                    generateFirst: "Please generate card first",
+                    downloadSuccess: "Card downloaded successfully!",
+                    downloadError: "Failed to generate image, please try again"
+                },
+                sample: {
+                    name: "Stella",
+                    intro: "This is a sample character introduction"
+                }
+            }
+        };
+
+        // 当前语言
+        let currentLang = 'zh';
+
+        // 切换语言函数
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            const langBtn = document.getElementById('langBtn');
+            langBtn.textContent = currentLang === 'zh' ? 'English' : '中文';
+            updatePageLanguage();
+        }
+
+        // 更新页面语言
+        function updatePageLanguage() {
+            const t = translations[currentLang];
+            
+            // 更新页面标题和副标题
+            document.querySelector('.header h1').textContent = t.title;
+            document.querySelector('.header p').textContent = t.subtitle;
+            
+            // 更新输入区域
+            document.querySelector('.input-section h2').textContent = t.inputTitle;
+            document.querySelector('label[for="characterName"]').textContent = t.characterNameLabel;
+            document.getElementById('characterName').placeholder = t.characterNamePlaceholder;
+            document.querySelector('label[for="characterIntro"]').textContent = t.introLabel;
+            document.getElementById('characterIntro').placeholder = t.introPlaceholder;
+            document.querySelector('label[for="jsonInput"]').textContent = t.jsonLabel;
+            document.getElementById('jsonInput').placeholder = t.jsonPlaceholder;
+            
+            // 更新按钮文本
+            document.querySelector('.btn-primary').textContent = t.parseBtn;
+            document.querySelector('.btn-warning').textContent = t.sampleBtn;
+            document.querySelector('#downloadBtn span').textContent = t.downloadBtn;
+
+            // 如果已经生成了名片，重新生成以更新语言
+            if (!document.getElementById('cardContainer').classList.contains('hidden')) {
+                parseJSON();
+            }
+        }
+
         let characterData = null;
         let clientData = null;
 
@@ -680,6 +897,7 @@
 
         // 生成装备面板
         async function generateEquipmentPanel(characterObj) {
+            const t = translations[currentLang];
             // 装备位置映射
             const equipmentSlots = {
                 "/item_locations/back": "E1",
@@ -746,7 +964,7 @@
             });
 
             let html = '<div class="equipment-panel">';
-            html += '<div class="panel-title">装备</div>';
+            html += `<div class="panel-title">${t.equipment}</div>`;
             html += '<div class="equipment-grid">';
             
             // 生成装备网格
@@ -764,7 +982,7 @@
                             </div>`;
                         } else {
                             html += `<div class="equipment-slot">
-                                <span style="color: rgba(255,255,255,0.3); font-size: 12px;">${slotNames[slotId]}</span>
+                                <span style="color: rgba(255,255,255,0.3); font-size: 12px;">${t.slots[slotId.toLowerCase()] || t.slots.empty}</span>
                             </div>`;
                         }
                     } else {
@@ -779,6 +997,7 @@
 
         // 生成房屋面板
         function generateHousePanel(data) {
+            const t = translations[currentLang];
             // 房屋房间映射
             const houseRoomsMapping = [
                 { hrid: "/house_rooms/dining_room", icon: "stamina", name: "餐厅" },
@@ -807,7 +1026,7 @@
             }
 
             let html = '<div class="house-panel">';
-            html += '<div class="panel-title">房屋等级</div>';
+            html += `<div class="panel-title">${t.houseRooms}</div>`;
             html += '<div class="house-grid">';
             
             // 生成房屋网格
@@ -834,7 +1053,7 @@
                             } else {
                                 html += `<div class="house-slot">
                                     ${createSvgIcon(houseRoom.icon, 30, 'skills')}
-                                    <div class="house-level" style="color: rgba(255,255,255,0.3);">Lv.0</div>
+                                    <div class="house-level" style="color: rgba(255,255,255,0.3);">${t.slots.empty}</div>
                                 </div>`;
                             }
                             roomIndex++;
@@ -851,6 +1070,7 @@
 
         // 生成能力面板
         function generateAbilityPanel(characterObj) {
+            const t = translations[currentLang];
             // 能力属性映射
             const abilityMapping = [
                 { key: "staminaLevel", name: "耐力", icon: "stamina" },
@@ -863,7 +1083,7 @@
             ];
 
             let html = '<div class="ability-panel">';
-            html += '<div class="panel-title">属性等级</div>';
+            html += `<div class="panel-title">${t.abilities}</div>`;
             html += '<div class="ability-list">';
             
             abilityMapping.forEach(ability => {
@@ -886,7 +1106,7 @@
                     <div class="ability-icon">
                         ${createSvgIcon(ability.icon, 30, 'skills')}
                     </div>
-                    <span style="flex: 1;">${ability.name}</span>
+                    <span style="flex: 1;">${t.attributes[ability.icon]}</span>
                     <span class="level">Lv.${level}</span>
                 </div>`;
             });
@@ -897,6 +1117,7 @@
 
         // 生成技能面板
         function generateSkillPanel(data) {
+            const t = translations[currentLang];
             // 技能槽位布局（3x2网格，支持0-5个技能）
             const slotLayout = [
                 ["S1", "S1", "S1"],
@@ -920,7 +1141,7 @@
                 .slice(0, 5); // 最多显示5个技能
 
             let html = '<div class="skill-panel">';
-            html += '<div class="panel-title">技能等级</div>';
+            html += `<div class="panel-title">${t.skills}</div>`;
             html += '<div class="skill-grid">';
             
             // 生成技能网格
@@ -939,7 +1160,7 @@
                             skillIndex++;
                         } else {
                             html += `<div class="skill-slot">
-                                <span style="color: rgba(255,255,255,0.3); font-size: 12px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); white-space: nowrap;">无技能</span>
+                                <span style="color: rgba(255,255,255,0.3); font-size: 12px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); white-space: nowrap;">${t.noSkill}</span>
                             </div>`;
                         }
                     } else {
@@ -1041,15 +1262,50 @@
         function showMessage(text, type) {
             const messageDiv = document.getElementById('message');
             messageDiv.className = type;
-            messageDiv.textContent = text;
+            const t = translations[currentLang].messages;
+            
+            // 根据消息类型选择对应的翻译
+            switch (text) {
+                case '请输入角色名称':
+                case 'Please enter character name':
+                    messageDiv.textContent = t.enterName;
+                    break;
+                case '请输入JSON数据':
+                case 'Please enter JSON data':
+                    messageDiv.textContent = t.enterJson;
+                    break;
+                case '数据解析成功！':
+                case 'Data parsed successfully!':
+                    messageDiv.textContent = t.parseSuccess;
+                    break;
+                case '示例数据已加载':
+                case 'Sample data loaded':
+                    messageDiv.textContent = t.sampleLoaded;
+                    break;
+                case '请先生成名片':
+                case 'Please generate card first':
+                    messageDiv.textContent = t.generateFirst;
+                    break;
+                case '名片下载成功！':
+                case 'Card downloaded successfully!':
+                    messageDiv.textContent = t.downloadSuccess;
+                    break;
+                default:
+                    if (text.startsWith('JSON解析失败:') || text.startsWith('JSON parse error:')) {
+                        messageDiv.textContent = t.jsonError + text.split(':')[1];
+                    } else {
+                        messageDiv.textContent = text;
+                    }
+            }
         }
 
         // 加载示例数据
         function loadSampleData() {
+            const t = translations[currentLang];
             // 设置示例角色名称和自我介绍
-            document.getElementById('characterName').value = "Stella";
-            document.getElementById('characterIntro').value = "这是示例角色自我介绍";
-            document.getElementById('introCount').textContent = "这是示例角色自我介绍".length;
+            document.getElementById('characterName').value = t.sample.name;
+            document.getElementById('characterIntro').value = t.sample.intro;
+            document.getElementById('introCount').textContent = t.sample.intro.length;
             
             const sampleData = {"player":{"powerLevel":54,"rangedLevel":147,"attackLevel":76,"magicLevel":36,"defenseLevel":130,"intelligenceLevel":126,"staminaLevel":129,"equipment":[{"itemLocationHrid":"/item_locations/alchemy_tool","itemHrid":"/items/rainbow_alembic","enhancementLevel":0},{"itemLocationHrid":"/item_locations/back","itemHrid":"/items/chimerical_quiver","enhancementLevel":10},{"itemLocationHrid":"/item_locations/body","itemHrid":"/items/kraken_tunic","enhancementLevel":12},{"itemLocationHrid":"/item_locations/cheesesmithing_tool","itemHrid":"/items/holy_hammer","enhancementLevel":5},{"itemLocationHrid":"/item_locations/cooking_tool","itemHrid":"/items/holy_spatula","enhancementLevel":5},{"itemLocationHrid":"/item_locations/crafting_tool","itemHrid":"/items/holy_chisel","enhancementLevel":5},{"itemLocationHrid":"/item_locations/earrings","itemHrid":"/items/philosophers_earrings","enhancementLevel":7},{"itemLocationHrid":"/item_locations/enhancing_tool","itemHrid":"/items/holy_enhancer","enhancementLevel":10},{"itemLocationHrid":"/item_locations/feet","itemHrid":"/items/centaur_boots","enhancementLevel":14},{"itemLocationHrid":"/item_locations/foraging_tool","itemHrid":"/items/crimson_shears","enhancementLevel":0},{"itemLocationHrid":"/item_locations/hands","itemHrid":"/items/marksman_bracers","enhancementLevel":12},{"itemLocationHrid":"/item_locations/head","itemHrid":"/items/acrobatic_hood","enhancementLevel":12},{"itemLocationHrid":"/item_locations/legs","itemHrid":"/items/kraken_chaps","enhancementLevel":12},{"itemLocationHrid":"/item_locations/milking_tool","itemHrid":"/items/crimson_brush","enhancementLevel":0},{"itemLocationHrid":"/item_locations/neck","itemHrid":"/items/philosophers_necklace","enhancementLevel":10},{"itemLocationHrid":"/item_locations/pouch","itemHrid":"/items/guzzling_pouch","enhancementLevel":10},{"itemLocationHrid":"/item_locations/ring","itemHrid":"/items/philosophers_ring","enhancementLevel":7},{"itemLocationHrid":"/item_locations/tailoring_tool","itemHrid":"/items/holy_needle","enhancementLevel":5},{"itemLocationHrid":"/item_locations/trinket","itemHrid":"/items/expert_task_badge","enhancementLevel":2},{"itemLocationHrid":"/item_locations/two_hand","itemHrid":"/items/cursed_bow","enhancementLevel":14},{"itemLocationHrid":"/item_locations/woodcutting_tool","itemHrid":"/items/crimson_hatchet","enhancementLevel":0}]},"food":{"/action_types/combat":[{"itemHrid":"/items/spaceberry_donut"},{"itemHrid":"/items/spaceberry_cake"},{"itemHrid":"/items/star_fruit_yogurt"}]},"drinks":{"/action_types/combat":[{"itemHrid":"/items/wisdom_coffee"},{"itemHrid":"/items/super_ranged_coffee"},{"itemHrid":"/items/critical_coffee"}]},"abilities":[{"abilityHrid":"/abilities/speed_aura","level":23},{"abilityHrid":"/abilities/frenzy","level":80},{"abilityHrid":"/abilities/berserk","level":90},{"abilityHrid":"/abilities/rain_of_arrows","level":85},{"abilityHrid":"/abilities/penetrating_shot","level":94}],"houseRooms":{"/house_rooms/archery_range":8,"/house_rooms/armory":6,"/house_rooms/brewery":4,"/house_rooms/dairy_barn":4,"/house_rooms/dining_room":7,"/house_rooms/dojo":8,"/house_rooms/forge":4,"/house_rooms/garden":4,"/house_rooms/gym":4,"/house_rooms/kitchen":4,"/house_rooms/laboratory":4,"/house_rooms/library":7,"/house_rooms/log_shed":4,"/house_rooms/mystical_study":4,"/house_rooms/observatory":6,"/house_rooms/sewing_parlor":4,"/house_rooms/workshop":4}};
 
