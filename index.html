@@ -647,7 +647,7 @@
         // 添加语言配置
         const translations = {
             zh: {
-                title: "MWI Character Card Generator",
+                title: "MWI角色名片生成器",
                 subtitle: "解析MWI Tools导出的JSON数据生成角色名片",
                 inputTitle: "输入角色信息",
                 characterNameLabel: "角色名称:",
@@ -812,6 +812,8 @@
             // 更新页面标题和副标题
             document.querySelector('.header h1').textContent = t.title;
             document.querySelector('.header p').textContent = t.subtitle;
+            // 更新HTML标题
+            document.title = t.title + ' By Windoge';
             
             // 更新输入区域
             document.querySelector('.input-section h2').textContent = t.inputTitle;
@@ -1355,11 +1357,12 @@
             const downloadBtn = document.getElementById('downloadBtn');
             const btnText = downloadBtn.querySelector('span');
             const originalText = btnText.textContent;
+            const t = translations[currentLang];
 
             // 立即更新按钮状态
             downloadBtn.classList.add('loading');
             downloadBtn.disabled = true;
-            btnText.textContent = '生成中...';
+            btnText.textContent = t.downloading;
 
             // 确保UI更新
             await new Promise(resolve => setTimeout(resolve, 0));
