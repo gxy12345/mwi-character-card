@@ -544,8 +544,47 @@
                 height: 55px;
             }
             
+            /* 移动端下调整图标尺寸 */
+            .house-slot svg {
+                width: 24px;
+                height: 24px;
+            }
+            
+            .skill-slot svg {
+                width: 30px;
+                height: 30px;
+            }
+            
+            /* 移动端下调整等级文字位置和尺寸 */
+            .house-level {
+                bottom: 4px;
+                font-size: 10px;
+                padding: 1px 4px;
+                min-width: 24px;
+            }
+            
+            .skill-level {
+                bottom: 4px;
+                font-size: 10px;
+                padding: 1px 4px;
+                min-width: 24px;
+            }
+            
+            /* 移动端下调整能力图标尺寸 */
+            .ability-icon svg {
+                width: 20px;
+                height: 20px;
+            }
+            
             .button-group {
                 flex-direction: column;
+            }
+            
+            /* 移动端下调整character-card最大宽度 */
+            .character-card {
+                max-width: 100%;
+                margin: 20px 10px;
+                padding: 15px;
             }
         }
     </style>
@@ -1368,8 +1407,12 @@
             await new Promise(resolve => setTimeout(resolve, 0));
 
             try {
+                // 检测是否为移动端
+                const isMobile = window.innerWidth <= 768;
+                
                 // 克隆卡片元素以避免修改原始DOM
                 const cardClone = cardElement.cloneNode(true);
+                cardClone.id = 'character-card-clone';
                 
                 // 内联所有SVG图标
                 const useElements = cardClone.querySelectorAll('use');
@@ -1411,17 +1454,198 @@
                 cardClone.style.position = 'absolute';
                 cardClone.style.left = '-9999px';
                 cardClone.style.top = '-9999px';
+                cardClone.style.visibility = 'visible';
+                
+                // 创建临时样式来优化下载
+                const tempStyle = document.createElement('style');
+                tempStyle.id = 'temp-download-style';
+                
+                if (isMobile) {
+                    // 移动端优化：单列布局样式
+                    tempStyle.textContent = `
+                        #character-card-clone {
+                            max-width: 550px !important;
+                            width: 550px !important;
+                            margin: 20px auto !important;
+                            padding: 25px !important;
+                            box-sizing: border-box !important;
+                        }
+                        #character-card-clone .card-content {
+                            grid-template-columns: 1fr !important;
+                            grid-template-rows: auto auto auto auto !important;
+                            gap: 20px !important;
+                        }
+                        #character-card-clone .equipment-panel {
+                            grid-column: 1 !important;
+                            grid-row: 1 !important;
+                        }
+                        #character-card-clone .ability-panel {
+                            grid-column: 1 !important;
+                            grid-row: 2 !important;
+                        }
+                        #character-card-clone .house-panel {
+                            grid-column: 1 !important;
+                            grid-row: 3 !important;
+                        }
+                        #character-card-clone .skill-panel {
+                            grid-column: 1 !important;
+                            grid-row: 4 !important;
+                        }
+                        #character-card-clone .equipment-slot {
+                            width: 45px !important;
+                            height: 60px !important;
+                        }
+                        #character-card-clone .house-slot,
+                        #character-card-clone .skill-slot {
+                            width: 55px !important;
+                            height: 80px !important;
+                        }
+                        #character-card-clone .house-slot svg {
+                            width: 32px !important;
+                            height: 32px !important;
+                        }
+                        #character-card-clone .skill-slot svg {
+                            width: 36px !important;
+                            height: 36px !important;
+                        }
+                        #character-card-clone .ability-icon svg {
+                            width: 24px !important;
+                            height: 24px !important;
+                        }
+                        #character-card-clone .house-level {
+                            bottom: 12px !important;
+                            font-size: 11px !important;
+                            padding: 2px 5px !important;
+                            min-width: 28px !important;
+                        }
+                        #character-card-clone .skill-level {
+                            bottom: 12px !important;
+                            font-size: 11px !important;
+                            padding: 2px 5px !important;
+                            min-width: 28px !important;
+                        }
+                        #character-card-clone .house-grid {
+                            gap: 12px !important;
+                            padding: 8px !important;
+                        }
+                        #character-card-clone .skill-grid {
+                            gap: 10px !important;
+                            padding: 8px !important;
+                        }
+                        #character-card-clone .equipment-grid {
+                            gap: 10px !important;
+                            padding: 8px !important;
+                        }
+                        #character-card-clone .panel-title {
+                            margin-bottom: 12px !important;
+                        }
+                        #character-card-clone .equipment-panel,
+                        #character-card-clone .ability-panel,
+                        #character-card-clone .house-panel,
+                        #character-card-clone .skill-panel {
+                            padding: 12px !important;
+                                                 }
+                     `;
+                } else {
+                    // 桌面端优化：双列布局样式
+                    tempStyle.textContent = `
+                        #character-card-clone {
+                            max-width: 900px !important;
+                            width: 900px !important;
+                            margin: 20px auto !important;
+                            padding: 25px !important;
+                            box-sizing: border-box !important;
+                        }
+                        #character-card-clone .card-content {
+                            grid-template-columns: 1fr 0.7fr !important;
+                            grid-template-rows: auto auto !important;
+                            gap: 20px !important;
+                        }
+                        #character-card-clone .equipment-panel {
+                            grid-column: 1 !important;
+                            grid-row: 1 !important;
+                        }
+                        #character-card-clone .ability-panel {
+                            grid-column: 2 !important;
+                            grid-row: 1 !important;
+                        }
+                        #character-card-clone .house-panel {
+                            grid-column: 1 !important;
+                            grid-row: 2 !important;
+                        }
+                        #character-card-clone .skill-panel {
+                            grid-column: 2 !important;
+                            grid-row: 2 !important;
+                        }
+                        #character-card-clone .equipment-slot,
+                        #character-card-clone .house-slot,
+                        #character-card-clone .skill-slot {
+                            width: 50px !important;
+                            height: 70px !important;
+                        }
+                        #character-card-clone .house-slot svg {
+                            width: 32px !important;
+                            height: 32px !important;
+                        }
+                        #character-card-clone .skill-slot svg {
+                            width: 40px !important;
+                            height: 40px !important;
+                        }
+                        #character-card-clone .ability-icon svg {
+                            width: 24px !important;
+                            height: 24px !important;
+                        }
+                        #character-card-clone .house-level {
+                            bottom: 8px !important;
+                            font-size: 12px !important;
+                            padding: 2px 6px !important;
+                            min-width: 30px !important;
+                        }
+                        #character-card-clone .skill-level {
+                            bottom: 10px !important;
+                            font-size: 12px !important;
+                            padding: 2px 6px !important;
+                            min-width: 30px !important;
+                        }
+                        #character-card-clone .equipment-grid {
+                            gap: 15px !important;
+                            padding: 10px !important;
+                        }
+                        #character-card-clone .house-grid {
+                            gap: 12px !important;
+                            padding: 8px !important;
+                        }
+                        #character-card-clone .skill-grid {
+                            gap: 8px !important;
+                            padding: 8px !important;
+                        }
+                        #character-card-clone .equipment-panel,
+                        #character-card-clone .ability-panel,
+                        #character-card-clone .house-panel,
+                        #character-card-clone .skill-panel {
+                            padding: 15px !important;
+                        }
+                    `;
+                }
+                
+                document.head.appendChild(tempStyle);
+                
                 document.body.appendChild(cardClone);
 
-                // 获取原始卡片的实际尺寸
-                const originalCard = document.getElementById('character-card');
-                const originalWidth = originalCard.offsetWidth;
-                const originalHeight = originalCard.offsetHeight;
-                const originalRatio = originalHeight / originalWidth;
+                // 等待样式应用
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // 获取克隆卡片的实际尺寸
+                const cloneWidth = cardClone.offsetWidth;
+                const cloneHeight = cardClone.offsetHeight;
+
+                // 确保最小尺寸
+                const finalWidth = Math.max(cloneWidth, isMobile ? 550 : 900);
+                const finalHeight = Math.max(cloneHeight, isMobile ? 900 : 700);
 
                 // 设置克隆元素的尺寸
-                cardClone.style.width = originalWidth + 'px';
-                cardClone.style.height = originalHeight + 'px';
+                cardClone.style.width = finalWidth + 'px';
+                cardClone.style.height = finalHeight + 'px';
 
                 // 生成图片
                 const canvas = await html2canvas(cardClone, {
@@ -1430,25 +1654,29 @@
                     useCORS: true,
                     allowTaint: true,
                     logging: false,
-                    width: originalWidth,
-                    height: originalHeight,
+                    width: finalWidth,
+                    height: finalHeight,
+                    scrollX: 0,
+                    scrollY: 0,
                     onclone: function(clonedDoc) {
-                        const clonedElement = clonedDoc.getElementById('character-card');
+                        const clonedElement = clonedDoc.getElementById('character-card-clone');
                         if (clonedElement) {
-                            // 复制原始元素的所有计算样式
-                            const computedStyle = window.getComputedStyle(originalCard);
-                            for (const prop of computedStyle) {
-                                clonedElement.style[prop] = computedStyle.getPropertyValue(prop);
-                            }
                             // 确保尺寸正确
-                            clonedElement.style.width = originalWidth + 'px';
-                            clonedElement.style.height = originalHeight + 'px';
+                            clonedElement.style.width = finalWidth + 'px';
+                            clonedElement.style.height = finalHeight + 'px';
+                            clonedElement.style.position = 'static';
+                            clonedElement.style.left = 'auto';
+                            clonedElement.style.top = 'auto';
+                            clonedElement.style.visibility = 'visible';
+                            
                             // 确保SVG元素可见且尺寸正确
                             clonedElement.querySelectorAll('svg').forEach(svg => {
                                 svg.style.visibility = 'visible';
                                 svg.style.opacity = '1';
-                                svg.setAttribute('width', svg.getAttribute('width'));
-                                svg.setAttribute('height', svg.getAttribute('height'));
+                                const width = svg.getAttribute('width');
+                                const height = svg.getAttribute('height');
+                                if (width) svg.setAttribute('width', width);
+                                if (height) svg.setAttribute('height', height);
                             });
                         }
                     }
@@ -1461,8 +1689,12 @@
                 outputCanvas.height = canvas.height;
                 outputCtx.drawImage(canvas, 0, 0);
 
-                // 移除临时克隆元素
+                // 清理临时元素和样式
                 document.body.removeChild(cardClone);
+                const tempStyleElement = document.getElementById('temp-download-style');
+                if (tempStyleElement) {
+                    document.head.removeChild(tempStyleElement);
+                }
 
                 // 下载图片
                 const link = document.createElement('a');
